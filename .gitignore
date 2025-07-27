@@ -1,0 +1,24 @@
+# --- Python ---
+# Virtual environment folders
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / optimized / C extensions
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Large Files & Datasets ---
+# Exclude all model weights. Use Git LFS for this if you MUST track them.
+*.pth
+*.pt
+*.onnx
+*.pb
+
+# Exclude dataset directory
+data/
+
+# Others
