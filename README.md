@@ -9,6 +9,21 @@ Exactly. The README.md will have a section like "Alternative Setup (using venv o
 ## Running the Download Script
 You are 100% right. The download_artifacts.py script will import the huggingface-hub library. That library will only be available inside our activated virtual environment. Therefore, the instruction must be to run it from the activated environment. This avoids any potential ModuleNotFoundError.
 
+## It looks like the kernel packaghe will be a thing to note in the requirements,txt (ipykernel)
+They will also need to select the python environment when they try to run the notebook the first time, and should choose the virt env just created, by whatever virt env manager was used to created it.
+
+Is This a VS Code-only Thing?
+No, this is a fundamental concept for the entire Jupyter ecosystem. Whether you are using:
+   VS Code
+   JupyterLab
+   The classic Jupyter Notebook server
+   PyCharm's notebook editor
+   Any other tool that uses .ipynb files
+...they all rely on the ipykernel package to find and communicate with Python environments. The steps are virtually identical everywhere.
+
+
+
+
 ### How a New User Will Use This
 
 This is the beautiful part. Here are the instructions you would put in your `README.md` for a new user:

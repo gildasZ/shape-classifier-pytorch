@@ -11,14 +11,18 @@ __pycache__/
 *.pyo
 *.pyd
 
+# IDE / Editor specific
+.vscode/
+.idea/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
 # --- Large Files & Datasets ---
 # Exclude all model weights. Use Git LFS for this if you MUST track them.
 *.pth
 *.pt
 *.onnx
 *.pb
-
-# Exclude dataset directory
-data/
 
 # Others
