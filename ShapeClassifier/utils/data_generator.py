@@ -7,15 +7,16 @@ import shutil
 from PIL import Image, ImageDraw
 import numpy as np
 
-# --- Configuration Constants ---
+# --- Universal Constants ---
+# These define the fundamental properties of the generated images and are used by the library functions.
 
-# 1. Image Specifications
+## 1. Image Specifications
 IMG_SIZE = 64
 GRAYSCALE_LEVELS = 255
 DARK_RANGE = (20, 80)
 LIGHT_RANGE = (180, 240)
 
-# 2. Shape Specifications
+## 2. Shape Specifications
 SHAPES = ['circle', 'square', 'triangle']
 CONDITIONS = [
     'fixed_size_fixed_rot',
@@ -30,10 +31,7 @@ RANDOM_SHAPE_SIZE_RANGE = (12, 21)
 NOISE_MEAN = 0
 NOISE_STD_DEV = 15
 
-# 4. Dataset Structure
-TOTAL_IMAGES = 6000 # Use a smaller number like 60 for quick testing
-SPLIT_RATIOS = {'train': 0.7, 'validation': 0.15, 'test': 0.15}
-
+# ---
 
 def _apply_gaussian_noise(image: Image.Image) -> Image.Image:
     """
@@ -183,18 +181,24 @@ def generate_dataset(root_dir: str, total_images: int, splits: dict, shapes: lis
 
 
 if __name__ == '__main__':
-    # This block allows the script to be run directly from the command line
-    # The output path is relative to this script's location in utils/
+    # --- Standalone Execution Configuration ---
+    # This configuration is used only when running this script directly.
+
+    ## Dataset Structure
+    TOTAL_IMAGES_FOR_RUN = 6000
+    SPLIT_RATIOS_FOR_RUN = {'train': 0.7, 'validation': 0.15, 'test': 0.15}
+    
+    ## The output path is relative to this script's location in utils/
     output_root_directory = os.path.join(
         '..', '..', '..', 'shape-classifier-artifacts', 'shape-classifier-datasets', 'ShapeClassifier'
     )
-    
-    # Ensure the target directory path is resolved correctly
+
+    ## Ensure the target directory path is resolved correctly
     output_root_directory = os.path.abspath(output_root_directory)
 
     generate_dataset(
         root_dir=output_root_directory,
-        total_images=TOTAL_IMAGES,
-        splits=SPLIT_RATIOS,
+        total_images=TOTAL_IMAGES_FOR_RUN,
+        splits=SPLIT_RATIOS_FOR_RUN,
         shapes=SHAPES
     )
