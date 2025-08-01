@@ -17,7 +17,6 @@ DARK_RANGE = (20, 80)
 LIGHT_RANGE = (180, 240)
 
 ## 2. Shape Specifications
-SHAPES = ['circle', 'square', 'triangle']
 CONDITIONS = [
     'fixed_size_fixed_rot',
     'fixed_size_random_rot',
@@ -32,6 +31,43 @@ NOISE_MEAN = 0
 NOISE_STD_DEV = 15
 
 # ---
+
+def _calculate_split_counts(total_images, splits, shapes, conditions):
+    """Calculates the number of images per split, ensuring divisibility."""
+    divisor = len(shapes) * len(conditions)
+    print("------------------------------")
+    print(f"Ensuring all split counts are divisible by {divisor} (shapes * conditions).")
+    
+    adjusted_counts = {}
+    total_used_images = 0
+
+    # First pass: calculate the base counts by rounding down
+    for split_name, split_ratio in splits.items():
+        ideal_count = int(total_images * split_ratio)
+        # Find the largest number <= ideal_count that is divisible by our divisor
+        adjusted_count = (ideal_count // divisor) * divisor
+        adjusted_counts[split_name] = adjusted_count
+        total_used_images += adjusted_count
+    
+    # Second pass: allocate remaining images to the training set
+    remaining_images = total_images - total_used_images
+    if remaining_images >= divisor:
+        # Calculate how many full blocks we can add
+        extra_blocks = remaining_images // divisor
+        # Add these blocks to the training set
+        adjusted_counts['train'] += extra_blocks * divisor
+        total_used_images += extra_blocks * divisor
+    
+    print("--- Adjusted Dataset Split ---")
+    for split_name, count in adjusted_counts.items():
+        print(f"  - {split_name.capitalize()}: {count} images")
+    print(f"Total images to be generated: {total_used_images}")
+    if total_used_images < total_images:
+        print(f"Note: {total_images - total_used_images} images were dropped to ensure balanced splits.")
+    print("------------------------------")
+    
+    return adjusted_counts
+
 
 def _apply_gaussian_noise(image: Image.Image) -> Image.Image:
     """
@@ -158,9 +194,14 @@ def generate_dataset(root_dir: str, total_images: int, splits: dict, shapes: lis
         for shape_name in shapes:
             os.makedirs(os.path.join(root_dir, split_name, shape_name), exist_ok=True)
 
+    # --- Use the helper function to get robust split counts ---
+    final_split_counts = _calculate_split_counts(total_images, splits, shapes, CONDITIONS)
+
     img_counter = 0
-    for split_name, split_ratio in splits.items():
-        num_split_images = int(total_images * split_ratio)
+    for split_name, num_split_images in final_split_counts.items():
+        if num_split_images == 0:
+            continue
+        
         num_images_per_shape = num_split_images // len(shapes)
         
         for shape_name in shapes:
@@ -187,6 +228,9 @@ if __name__ == '__main__':
     ## Dataset Structure
     TOTAL_IMAGES_FOR_RUN = 6000
     SPLIT_RATIOS_FOR_RUN = {'train': 0.7, 'validation': 0.15, 'test': 0.15}
+
+    ## Shape Specifications
+    SHAPES = ['circle', 'square', 'triangle']
     
     ## The output path is relative to this script's location in utils/
     output_root_directory = os.path.join(

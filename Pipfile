@@ -19,16 +19,18 @@ verify_ssl = true
 name = "downloadpytorch"
 
 [packages]
-torch = {version = "*", index = "downloadpytorch"}
-torchvision = {version = "*", index = "downloadpytorch"}
+torch = "*"
+torchvision = "*"
 numpy = "*"
 matplotlib = "*"
 scikit-learn = "*"
 pillow = "*"
 seaborn = "*"
+ipykernel = "*"
+tqdm = "*"
+ipywidgets = "*"
 
 [dev-packages]
-ipykernel = "*"
 
 [requires]
 python_version = "3.12"

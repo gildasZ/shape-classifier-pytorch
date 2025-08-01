@@ -21,7 +21,11 @@ No, this is a fundamental concept for the entire Jupyter ecosystem. Whether you 
    Any other tool that uses .ipynb files
 ...they all rely on the ipykernel package to find and communicate with Python environments. The steps are virtually identical everywhere.
 
-
+## Enable the Jupyter Extension (Good Practice): This step ensures that your Jupyter environment can properly display the widgets.
+```
+jupyter nbextension enable --py widgetsnbextension
+```
+(Note: Modern environments like VS Code often handle this automatically after a restart, but running this command is the explicit and correct way to configure it.)
 
 
 ### How a New User Will Use This
@@ -87,5 +91,5 @@ Generate a synthetic dataset using Python's PIL library, where each image will c
 * Each shape should be randomly placed within the image frame.
 
 ### Ensure a balanced dataset: generate an equal number of images for each shape.
-    Normalize the images and split the dataset into training, validation, and testing sets. Create DataLoader for each dataset subset with a suitable batch size.
+   Normalize the images and split the dataset into training, validation, and testing sets. Create DataLoader for each dataset subset with a suitable batch size.
 
