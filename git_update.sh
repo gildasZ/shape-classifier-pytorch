@@ -4,16 +4,38 @@
 DEFAULT_BRANCH="main"
 DEFAULT_PUSH=true
 ASK_MODE=false
+SCRIPT_SUCCESS=false
 
 # --- Function to print usage ---
 usage() {
-    echo ""
+    echo
     echo "Usage: $0 -m \"Your commit message\" [-b <branch_name>] [--no-push] [--ask]"
     echo "  -m <message> : (Required) The commit message."
     echo "  -b <branch>  : (Optional) The branch to push to. Defaults to '$DEFAULT_BRANCH'."
     echo "  --no-push    : (Optional) If set, will commit but not push."
     echo "  --ask        : (Optional) If set, will ask for confirmation before acting."
     exit 1
+}
+
+# --- Cleanup function to be called by trap ---
+# All cleanup logic is now in one place.
+cleanup() {
+    # Only run the extra status check if the script finished successfully.
+    if [ "$SCRIPT_SUCCESS" = true ]; then
+        echo
+        echo "--- Checking for ignored files ---"
+        git status --ignored
+        echo "------------------------------"
+    fi
+
+    # This part ALWAYS runs to ensure the user is returned to their branch.
+    # The check for ORIGINAL_BRANCH prevents an error if the script fails before it's set.
+    if [ -n "$ORIGINAL_BRANCH" ]; then
+        echo
+        echo "--- Returning to original branch: $ORIGINAL_BRANCH ---"
+        # Use --quiet on the switch back to make the exit cleaner.
+        git switch --quiet "$ORIGINAL_BRANCH"
+    fi
 }
 
 # --- Parse Command-Line Arguments ---
@@ -45,10 +67,11 @@ echo "--- Currently on branch '$ORIGINAL_BRANCH' ---"
 
 # 2. Set up a trap to switch back on exit, no matter what.
 #    This ensures we always return the user to their original branch.
-trap "echo; echo '--- Returning to original branch: $ORIGINAL_BRANCH ---'; git switch '$ORIGINAL_BRANCH'" EXIT
+#    The trap now calls our smart cleanup function.
+trap cleanup EXIT
 
 # 3. Switch to target branch before doing anything else
-echo ""
+echo
 echo "--- Ensuring we are on branch '$BRANCH' ---"
 # Use 'git switch' (modern) or 'git checkout'
 if ! git switch "$BRANCH"; then
@@ -59,7 +82,7 @@ if ! git switch "$BRANCH"; then
 fi
 
 # --- Main Logic ---
-echo ""
+echo
 echo "--- Checking Git status on branch '$BRANCH' ---"
 git status
 
@@ -72,7 +95,7 @@ if git diff-index --quiet HEAD --; then
     exit 0 # The trap will still run on exit!
 fi
 
-echo ""
+echo
 echo "Changes detected in the working directory."
 
 # --- Confirmation Step (if --ask is used) ---
@@ -86,11 +109,11 @@ if [ "$ASK_MODE" = true ]; then
 fi
 
 # --- Git Operations ---
-echo ""
+echo
 echo "--- Staging all changes ---"
 git add -A
 
-echo ""
+echo
 echo "--- Committing changes ---"
 git commit -m "$COMMIT_MSG"
 
@@ -103,6 +126,6 @@ else
     echo "Skipping push as per '--no-push' flag."
 fi
 
-echo ""
+echo
 echo "--- Git update complete! ---"
 # The script ends here. The `trap` command will now execute automatically.
