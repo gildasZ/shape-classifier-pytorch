@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# --- Configuration ---
+DEFAULT_BRANCH="main"
+DEFAULT_PUSH=true
+ASK_MODE=false
+
+# --- Function to print usage ---
+usage() {
+    echo ""
+    echo "Usage: $0 -m \"Your commit message\" [-b <branch_name>] [--no-push] [--ask]"
+    echo "  -m <message> : (Required) The commit message."
+    echo "  -b <branch>  : (Optional) The branch to push to. Defaults to '$DEFAULT_BRANCH'."
+    echo "  --no-push    : (Optional) If set, will commit but not push."
+    echo "  --ask        : (Optional) If set, will ask for confirmation before acting."
+    exit 1
+}
+
+# --- Parse Command-Line Arguments ---
+COMMIT_MSG=""
+BRANCH=$DEFAULT_BRANCH
+DO_PUSH=$DEFAULT_PUSH
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -m) COMMIT_MSG="$2"; shift ;;
+        -b) BRANCH="$2"; shift ;;
+        --no-push) DO_PUSH=false ;;
+        --ask) ASK_MODE=true ;;
+        *) usage ;;
+    esac
+    shift
+done
+
+# --- Validate required arguments ---
+if [ -z "$COMMIT_MSG" ]; then
+    echo "Error: Commit message is required."
+    usage
+fi
+
+# --- GRACEFUL BRANCH SWITCHING ---
+# 1. Save the current branch name
+ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "--- Currently on branch '$ORIGINAL_BRANCH' ---"
+
+# 2. Set up a trap to switch back on exit, no matter what.
+#    This ensures we always return the user to their original branch.
+trap "echo; echo '--- Returning to original branch: $ORIGINAL_BRANCH ---'; git switch '$ORIGINAL_BRANCH'" EXIT
+
+# 3. Switch to target branch before doing anything else
+echo ""
+echo "--- Ensuring we are on branch '$BRANCH' ---"
+# Use 'git switch' (modern) or 'git checkout'
+if ! git switch "$BRANCH"; then
+    echo "Error: Could not switch to branch '$BRANCH'."
+    echo "Please resolve any conflicts or ensure the branch exists."
+    # The trap will still run on exit, returning you to ORIGINAL_BRANCH
+    exit 1
+fi
+
+# --- Main Logic ---
+echo ""
+echo "--- Checking Git status on branch '$BRANCH' ---"
+git status
+
+# Check if there are any changes to be committed
+if git diff-index --quiet HEAD --; then
+    echo "Working directory is clean. Nothing to commit."
+    echo "--- Checking for untracked files ---"
+    git status --porcelain | grep "^??"
+    echo "----------------------------------"
+    exit 0 # The trap will still run on exit!
+fi
+
+echo ""
+echo "Changes detected in the working directory."
+
+# --- Confirmation Step (if --ask is used) ---
+if [ "$ASK_MODE" = true ]; then
+    read -p "Do you want to add, commit, and push these changes? (y/n) " -n 1 -r
+    echo # move to a new line
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Operation cancelled."
+        exit 1
+    fi
+fi
+
+# --- Git Operations ---
+echo ""
+echo "--- Staging all changes ---"
+git add -A
+
+echo ""
+echo "--- Committing changes ---"
+git commit -m "$COMMIT_MSG"
+
+if [ "$DO_PUSH" = true ]; then
+    echo ""
+    echo "--- Pushing to branch '$BRANCH' ---"
+    git push origin "$BRANCH"
+else
+    echo ""
+    echo "Skipping push as per '--no-push' flag."
+fi
+
+echo ""
+echo "--- Git update complete! ---"
+# The script ends here. The `trap` command will now execute automatically.
