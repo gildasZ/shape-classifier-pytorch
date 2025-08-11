@@ -92,6 +92,8 @@ if git diff-index --quiet HEAD --; then
     echo "--- Checking for untracked files ---"
     git status --porcelain | grep "^??"
     echo "----------------------------------"
+
+    SCRIPT_SUCCESS=true # Set flag to true on successful "clean" exit
     exit 0 # The trap will still run on exit!
 fi
 
@@ -128,4 +130,7 @@ fi
 
 echo
 echo "--- Git update complete! ---"
+
+SCRIPT_SUCCESS=true # Set flag to true on successful "commit" exit
+
 # The script ends here. The `trap` command will now execute automatically.
